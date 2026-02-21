@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config["JWT_SECRET_KEY"] = "super-secret-key-cambia-questa"
 jwt = JWTManager(app)
 
-# Swagger
+# Swagger (anche se online non lo useremo)
 swagger_template = {
     "swagger": "2.0",
     "info": {
@@ -21,7 +21,7 @@ swagger_template = {
 }
 Swagger(app, template=swagger_template)
 
-# ROUTE DI TEST (FONDAMENTALE)
+# Route di test
 @app.route("/")
 def home():
     return jsonify({"status": "API online"})
@@ -31,5 +31,5 @@ db.init_db()
 app.register_blueprint(api)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
