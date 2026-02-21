@@ -6,7 +6,7 @@ from routes import api
 
 app = Flask(__name__)
 
-app.config["JWT_SECRET_KEY"] = "super-secret-key-cambia-questa"
+app.config["JWT_SECRET_KEY"] = "super-secret-key"
 JWTManager(app)
 
 Swagger(app)
