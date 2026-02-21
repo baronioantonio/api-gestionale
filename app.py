@@ -20,3 +20,13 @@ app.register_blueprint(api)
 
 # ⚠️ NIENTE app.run()
 # Gunicorn gestisce l'avvio
+
+@app.route("/_routes")
+def _routes():
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            "rule": rule.rule,
+            "methods": sorted(list(rule.methods))
+        })
+    return {"routes": routes}
