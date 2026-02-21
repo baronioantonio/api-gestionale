@@ -1,11 +1,22 @@
 from flask import Flask, jsonify
+from flask_jwt_extended import JWTManager
+import db
+from routes import api
 
 app = Flask(__name__)
 
+# JWT
+app.config["JWT_SECRET_KEY"] = "super-secret-key-cambia-questa"
+JWTManager(app)
+
+# Health check / root
 @app.route("/")
 def home():
     return jsonify({"status": "API online"})
 
-@app.route("/ping")
-def ping():
-    return jsonify({"ping": "pong"})
+# DB + API
+db.init_db()
+app.register_blueprint(api)
+
+# ⚠️ NIENTE app.run()
+# Gunicorn gestisce l'avvio
