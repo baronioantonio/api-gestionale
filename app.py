@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_jwt_extended import JWTManager
 from flasgger import Swagger
@@ -6,16 +7,16 @@ from routes import api
 
 app = Flask(__name__)
 
-# ---------------- JWT ----------------
+# ---------- JWT ----------
 app.config["JWT_SECRET_KEY"] = "super-secret-key-cambia-questa"
 jwt = JWTManager(app)
 
-# ---------------- SWAGGER ----------------
+# ---------- SWAGGER ----------
 swagger_template = {
     "swagger": "2.0",
     "info": {
         "title": "API Gestionale",
-        "description": "Backend REST con JWT, Clienti e Ordini",
+        "description": "Backend Flask con JWT, Clienti e Ordini",
         "version": "1.0.0"
     },
     "securityDefinitions": {
@@ -30,9 +31,11 @@ swagger_template = {
 
 Swagger(app, template=swagger_template)
 
-# ---------------- DB + ROUTES ----------------
+# ---------- DB + ROUTES ----------
 db.init_db()
 app.register_blueprint(api)
 
+# ---------- AVVIO COMPATIBILE RAILWAY ----------
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
