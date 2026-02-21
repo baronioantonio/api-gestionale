@@ -1,5 +1,2 @@
 flask
-flask-jwt-extended
-flasgger
-werkzeug
 gunicorn
