@@ -4,103 +4,120 @@ from flask_jwt_extended import (
     jwt_required
 )
 from werkzeug.security import generate_password_hash, check_password_hash
+
 import db
 import models
-from errors import error
 
+# Blueprint SENZA prefisso
 api = Blueprint("api", __name__)
 
-# ================= AUTH =================
+# =========================
+# AUTH
+# =========================
 
-@api.route("/register", methods=["POST"])
+@api.route("/register", methods=["POST"], strict_slashes=False)
 def register():
-    data = request.get_json()
+    data = request.get_json(silent=True)
+
     if not data:
-        return error("JSON mancante")
+        return jsonify({"error": "JSON mancante"}), 400
 
     username = data.get("username")
     password = data.get("password")
 
     if not username or not password:
-        return error("Username e password obbligatori")
+        return jsonify({"error": "Username e password obbligatori"}), 400
 
     if db.get_user(username):
-        return error("Utente già esistente", 409)
+        return jsonify({"error": "Utente già esistente"}), 409
 
-    pwd_hash = generate_password_hash(password)
-    db.add_user(username, pwd_hash)
+    password_hash = generate_password_hash(password)
+    db.add_user(username, password_hash)
 
     return jsonify({"status": "utente creato"}), 201
 
 
-@api.route("/login", methods=["POST"])
+@api.route("/login", methods=["POST"], strict_slashes=False)
 def login():
-    data = request.get_json()
+    data = request.get_json(silent=True)
+
     if not data:
-        return error("JSON mancante")
+        return jsonify({"error": "JSON mancante"}), 400
 
-    user = db.get_user(data.get("username"))
+    username = data.get("username")
+    password = data.get("password")
+
+    if not username or not password:
+        return jsonify({"error": "Credenziali non valide"}), 401
+
+    user = db.get_user(username)
     if not user:
-        return error("Credenziali non valide", 401)
+        return jsonify({"error": "Credenziali non valide"}), 401
 
-    if not check_password_hash(user[2], data.get("password")):
-        return error("Credenziali non valide", 401)
+    if not check_password_hash(user[2], password):
+        return jsonify({"error": "Credenziali non valide"}), 401
 
-    token = create_access_token(identity=user[1])
-    return jsonify(access_token=token)
+    access_token = create_access_token(identity=username)
+    return jsonify(access_token=access_token)
 
-# ================= CLIENTI =================
 
-@api.route("/clienti", methods=["GET"])
+# =========================
+# CLIENTI
+# =========================
+
+@api.route("/clienti", methods=["GET"], strict_slashes=False)
 @jwt_required()
 def get_clienti():
     return jsonify(models.get_clienti())
 
 
-@api.route("/clienti", methods=["POST"])
+@api.route("/clienti", methods=["POST"], strict_slashes=False)
 @jwt_required()
 def add_cliente():
-    data = request.get_json()
+    data = request.get_json(silent=True)
+
     if not data:
-        return error("JSON mancante")
+        return jsonify({"error": "JSON mancante"}), 400
 
     nome = data.get("nome")
-    if not nome:
-        return error("Nome obbligatorio")
+    email = data.get("email")
+    telefono = data.get("telefono")
 
-    models.add_cliente(
-        nome,
-        data.get("email"),
-        data.get("telefono")
-    )
+    if not nome:
+        return jsonify({"error": "Nome obbligatorio"}), 400
+
+    models.add_cliente(nome, email, telefono)
     return jsonify({"status": "cliente creato"}), 201
 
 
-# ================= ORDINI =================
+# =========================
+# ORDINI
+# =========================
 
-@api.route("/clienti/<int:cid>/ordini", methods=["GET"])
+@api.route("/clienti/<int:cliente_id>/ordini", methods=["GET"], strict_slashes=False)
 @jwt_required()
-def get_ordini(cid):
-    return jsonify(models.get_ordini(cid))
+def get_ordini(cliente_id):
+    return jsonify(models.get_ordini(cliente_id))
 
 
-@api.route("/clienti/<int:cid>/ordini", methods=["POST"])
+@api.route("/clienti/<int:cliente_id>/ordini", methods=["POST"], strict_slashes=False)
 @jwt_required()
-def add_ordine(cid):
-    data = request.get_json()
+def add_ordine(cliente_id):
+    data = request.get_json(silent=True)
+
     if not data:
-        return error("JSON mancante")
+        return jsonify({"error": "JSON mancante"}), 400
 
     descrizione = data.get("descrizione")
     importo = data.get("importo")
 
     if not descrizione:
-        return error("Descrizione obbligatoria")
+        return jsonify({"error": "Descrizione obbligatoria"}), 400
 
     try:
         importo = float(importo)
-    except:
-        return error("Importo non valido")
+    except (TypeError, ValueError):
+        return jsonify({"error": "Importo non valido"}), 400
 
-    models.add_ordine(cid, descrizione, importo)
+    models.add_ordine(cliente_id, descrizione, importo)
     return jsonify({"status": "ordine creato"}), 201
